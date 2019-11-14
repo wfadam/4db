@@ -1,0 +1,192 @@
+Bayesian Machine Learning
+	when to use Bayesian machine learning
+		Bayesian networks (Bayes nets)
+			represent Bayesian inference problems as Bayes nets
+		parameter estimation problems
+			have a derived statistcal model of some domain
+				use bayesian statistics to make a prediction
+			think the parameters of the
+			 model are meaningful
+				fit the parameters in order to learn something useful
+		model comparisons
+			which model best fits the data?
+			multiple models of differing complexities
+				trade off complexity with the degree of fit
+				Bayesian model averaging
+					define a prior over the models themselves and average the predictions with respect to the posterior over models.
+	advanced sampling algorithms
+		sequential Monte Carlo (SMC) algorithms
+			annealed importance sampling (AIS)
+				an easy initial distribution (such as the prior) gradually "anneals"  to an intractable target distribution (such as the posterior) by passing through a sequence of intermediate distributions.
+					the algorithms computes a set of weights which can be used to estimate the marginal likelihood.
+						if enough intermediate distributions are used, the variance of the weights is small, and therefore they yield an accurate estimate if the marginal likelihood.
+					a MCMC transition is performed with respect to each of the intermediate distributions. Since mixing is generally faster near the initial distribution. this is supposed to help the sampler avoid getting stuck in local modes.
+			a class of techniques  based on approximately sampling from a sequence of related distributions.
+			the particle filter
+				the most common example , an inference algorithm, typically applied to time series models.
+					accounting for observations one time step at a time, where at each time step the posterior over the latent state is represented with a set of particles.
+		Markov chain Monte Carlo (MCMC) algorithms
+			slice sampling
+				the main advantage is that the algorithm doesn't require specifying any parameters.
+					it is oftem combined with other algorithms such as HMC which would otherwise require specifying step size parameters/
+				an auxiliary variable method for sampling from one-dimensional distributions.
+			collapsed Gibbs sampling
+				a subset of the variables  are marginalised (or collapsed) out analytically, and Gibbs sampling is performed over the remaining variables.
+					i.e. when fitting a CRp clustering model, the cluster parameters are often marganilised out and Gibbs sampling is performed over the cluster assignments. (This can dramatically improve mixing as the assignments and cluster parameters are highly coupled.)
+			Hamiltoniam Monte Carlo (HMC)
+				an instance of M-H for continuous spaces
+				the gradient of the log probability is used to choose promising directions to explore
+				this is the algorithm which powers [Stan](http://mc-stan.org/)
+			reversible jump MCMC
+				a way of constructing M-H proposals between spaces of differing dimensionality
+				The most common case is Bayesian model averaging.
+	theoretical issues with Bayesian methods
+		defining a Bayesian model requires choosing priors over the parameters
+			if there aren't strong beliefs about the parameters, uniformative priors may be chosen.
+				Jeffreys prior is a common choice of uninformative prior.
+		how much data is required to accurately estimate the parameters of the model?
+			the asymptotics of maximum likelihood provide insight, since for finite models, the posterior distribution has similar asymptotic behaviour to the distribution of maximum likelihood estimates.
+	Bayesian inference algorithms
+		techniques
+			Markov chain Monte Carlo (MCMC)
+				sampling-based algorithms running Markov chains over parameters in the posterior distribution
+				Metropolis-Hastings (M-H) recipe to construct valid Markov chains
+					valid if Markov chain has the posterior distribution as a  stationary distribution
+					choose a proposal distribution and correct for bias by stochastically accepting or rejecting the proposal.
+			MAP estimation
+				approximate the posterior with a point estimate on the optimal parameters
+					replaces integration problem with an optimisation problem
+			Gibbs sampling
+				**This is the method of choice for potfit**
+				iterative procedure  sampling each random variable  from its conditional distribution given the remaining ones.
+				result is (hopefully) an approximate sample from the posterior distribution
+			variational inference
+				approximate the intractable posterior distribution with a tractable distribution
+					choose parameters of tractable approximation which  minimise some measure of distance from the true posterior
+		no analytic solution for posterior distribution over a model's parameters (and possibly latent variables) given the observed data
+			use inference to approximate and improve posterior distribution fit
+		variational inference
+			examples
+				canonical examples
+					belief propagation
+						applied to tree-structured graphical models
+							max-product algorithm
+								computed the most likely joint assignment to all of the variables.
+							sum-product algorithm
+								computed the marginal distribution of each individual variables (an also over all pair of neighbouring variables).
+							when applied to these models BP performs exact posterior inference.
+							forward-backward algorithm
+								the most common special case of BP on trees for HMMs.
+								Kalman smoothing is a special case of the forward-backward algorithm
+						a family of inference algorithms intended for graphical models such as Bayes nets and Markov random fields (MRFs).
+							the variables in the model ""pass messages" to each other which summarise information about the joint distribution over other variables.
+								commonly used in computer vision and information theory, whre the inference problems tend to have a regular structure.
+						applied to non-tree structured graphs
+							junction tree algorithm
+								defined coarse-grained "super-variables" to apply exact BP to non-tree structured graphs. The graph is then tree-structured with respect to the ""super-variables.
+							this doesn't give exact resuls, and in fact lacks even basic guarantees such as convergence to a fixed point, but often works well in practise
+							often called loopy belief propagation to distinguish it from the tree structures version.
+								loopy BP can be interpreted as a variational inference algorithm.
+				expectation approximation
+					approximate messages which represent only the expectations of certain sufficient statistics of the relevant variables are sent.
+					an approximation to loopy belief propagation
+				variational Bayes
+					the application of variational inference to Bayesial models where the posterior distribution over parameters cannot be represented exactly
+						variational Bayes EM can be used if the model includes latent variables.
+				mean field approximation
+					the approximating distribution has a simple form as all variables are assumed to be independent.
+					mean fields can be viewed in terms of convex duality, which leads to different generalisations from the usual representation.
+			a class of approximate inference techniques based on optimisation rather than sampling
+				the intractable posterior distribution is approximated with a tractable  approximation. The parameters of the approximate distribution are chosen to minimise some measure of distance (usually KL divergence) between the approximation and the posterior.
+			variational inference vs. sampling
+				variational inference algorithms involve different implementation challenges from sampling algorithms
+					once implemented, variational Bayes can be easier to test, as the standard checks for optimisation code can be employed (i.e. local optimum tests, gradient checking)
+					they are harder, in that they may require lengthy mathematical derivations to determine the update rules.
+					most variational inference algorithms converge to (local) optima, which eliminates the need to check convergence diagnostics.
+				the output of most variational inference algorithms is a distribution, rather than samples.
+					the variational distribution can be checked for information on the expectation or variance of a model parameter.
+						with sampling methods, a large number of samples often need to be collected, which is expensive.
+					the accuracy of the approximation with variational methods is limited by the expressiveness of the approximating class, which is not always obvious in how it differs from the posterior,
+						if a sampling algorithm is run long enough, you will eventually get accurate results.
+	quantities of interest (QoI) treated as random variables
+		used in machine learning due to the flexibility Bayesian statistics provides in building structured models of real world phenomena.
+		conclusions drawn by analysing the posterior distribution over these quantities given the observed data.
+			posterior probability
+				conditional probability assigned to a random event after relevant (prior) evidence/background is taken into account.
+	Models
+		easier to implement inference approximations
+			Bayesian information criterion (BIC)
+				takes the value of the MAP solution and adds a penalty  proportional to the number of parameters.
+			Laplace approximation
+				approximates the posterior distibution with a Gaussianc centered around the MAP estimate.
+		generative models to which Bayesian techniques are applied
+			mixture of gaussians
+				each data point belongs to one of several "clusters ", or groups
+					the data points within each cluster are Gaussian distributed
+					fitting this model often allows to infer a meaningful grouping of the data points.
+			factor analysis
+				each data point is approximated as a linear function of a lower dimensional representation
+					each dimension of the latent space corresponds to a meaningful factor (or dimension of variation) in the data.
+			in discriminative models the conditional distribution of the targets given the observations is directly modelled.
+				Bayesian linear regression is the canonical example of this
+			hidden Markov models
+				model for time series data where there is a latent discrete state which evolves over time
+		Advanced models
+			sparse coding
+				each data point is modelled as a linear combination of a small number of elements drawn from a larger dictionary.
+					independent component analysis is a closely related model
+					applications
+						natural image patches: when applied to natural image patched, the learned dictionary resembles the receptive fields of neurons in the primary visual cortex
+			latent Dirichlet allocation (a "topic model")
+				applied to problems containing a set of documents (e.g. web pages) are each assumed to be composed of some number of topics .
+				related models
+					nonnegative matrix factorization
+					probabilistic latent semantic analysis
+			logistic regression
+				a discriminative model for predicting binary targets given input features
+			Bayesian networks (Bayes nets)
+				directed graphs which encode patterns of probabilistic dependencies between different random variables.
+					typically chosen to represent the causal relationships between variables.
+					Bayes nets can also be learned in a non-Bayesian way, but Bayesian techniques can be used to learn both the parameters and structure (the sets of edges) f the network.
+			linear dynamical systems
+				a time series model where a low-dimensional gaussian latent state evolves over time. The observations are noisy linear functions of the latent states.
+					can be thought of as a continuous version of the HMM.
+					performing inference in this model can be performed exactly using the Kalman filter and smoother
+	non-Bayesian techniques
+		generalisation
+			how well a machine learning algorithm performs on data it hasn't seen before
+			techniques
+				regularisation
+					method to prevent overfitting
+				maximum liklihood
+					criterion for fitting the parameters of a generative model
+				expectation maximisation (EM)
+					algorithm for fitting generative models where each data point has associated lated (or unobserved) variables
+	Bayesian nonparametrics
+		sidesteps the problems containing unknown parameters which are typically required in advance, by defining models which are *infinitely* compex.
+			for a finite dataset, posterior inference  can still be performed in the models while only expressing a finite portion of them.
+		building blocks of Bayesian nonparametric models
+			Pitman-Yor process
+				like the CRP but has a more heavy tailed distribution (in particular, a power law) over cluster sizes.
+					power law distributions are a better fit to many real-world datasets than the exponential distributions favoured by the CRP.
+					i.e. very few large clustered would be expected and instead there will likely be a large number of smaller clusters.
+			Chinese restaurant process
+				most commonly used in clustering models when the number of components will not be specified in advance.
+					The inference algorithms are fairly simple and well understood, so there is no reason not to use a CRP model in place of a finite clustering model.
+				a prior over partitions of an infinite set of objects
+				the process can equivalently be viewed as a Dirichlet process.
+			Dirichlet diffusion trees
+				a hierarchical clustering model where the data points cluster at different levels of granularity.
+					i.e. there may be a few coarse-grained clusters, but these themselves might decompose into more finite-grained clusters.
+			Gaussian processes
+				form the priors over the functions such that the values sampled at any finite set of points are jointly Gaussian. The default approach is a prior over functions is desired.
+				posterior inference is tractable in many instances.
+			hierarchial Dirichlet process
+				a set of Dirichlet processes which share the same base measure, and the base measure is itself drawn from a Dirichlet process.
+			Indian buffet process
+				a prior over infinite binary machines such that each row of the matrix has only a finite number of 1's.
+				commonly used in models where each object can have various attributes, i.e. rows of the matrix correspond to objects, columns correspond to attributes, and an entry is 1 if the object has an attribute.
+				examples
+					IBP linear-Gaussian model
+						the observed data are linear functions of the attributes.
+						the beta process is to the IBP as the Dirichlet process is to the CRP.
